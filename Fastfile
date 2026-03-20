@@ -33,7 +33,7 @@ module FastlaneConfig
 end
 
 # ==================== 加载环境变量 ====================
-env_file_path = File.expand_path('../.env', __dir__)
+env_file_path = File.expand_path('.env', __dir__)
 if File.exist?(env_file_path)
   require 'dotenv'
   Dotenv.load(env_file_path)
@@ -554,8 +554,6 @@ platform :ios do
   end
 end
 # ==================== GGFastlane 配置 ====================
-# 加载 GGFastlane 插件
-require 'gg_fastlane'
 
 # GGFastlane 配置
 GG_CONFIG = {
