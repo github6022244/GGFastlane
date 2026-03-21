@@ -24,6 +24,10 @@ source "https://rubygems.org"
 
 gem "fastlane", "~> 2.232.0"    # iOS/Android 自动化构建工具
 gem "dotenv", "~> 2.8.1"        # 环境变量加载工具
+
+# 加载 Fastlane 插件配置
+plugins_path = File.join(File.dirname(__FILE__), 'fastlane', 'Pluginfile')
+eval_gemfile(plugins_path) if File.exist?(plugins_path)
 EOF
 
 # 配置 Bundler 路径（生成 .bundle/config，指定依赖安装到 vendor/bundle）
@@ -96,6 +100,9 @@ GG_OUTPUT_DIR_TESTFLIGHT=~/Desktop/test-flight
 
 # 蒲公英 API Key（在蒲公英后台获取）
 GG_PGYER_API_KEY=xxx
+
+# 蒲公英 User Key（在蒲公英后台获取，与 API Key 配合使用）
+GG_PGYER_USER_KEY=xxx
 
 # 蒲公英安装包密码（可选）
 GG_PGYER_PASSWORD=1234
@@ -216,6 +223,7 @@ mkdir -p "${FASTLANE_DIR}/Tools"     # 存放 Bugly 符号表上传工具
 echo "🔌 配置 Pluginfile..."
 
 PLUGINFILE_PATH="${FASTLANE_DIR}/Pluginfile"
+NEED_INSTALL_PLUGINS=false
 
 if [ -f "${PLUGINFILE_PATH}" ]; then
     echo "⚠️  检测到 Pluginfile 已存在"
@@ -231,6 +239,7 @@ if [ -f "${PLUGINFILE_PATH}" ]; then
 gem 'fastlane-plugin-pgyer'
 EOF
         echo "✅ 已追加 pgyer 插件到 Pluginfile"
+        NEED_INSTALL_PLUGINS=true
     fi
 else
     echo "📄 创建 Pluginfile..."
@@ -241,6 +250,7 @@ else
 gem 'fastlane-plugin-pgyer'    # 蒲公英分发平台插件
 EOF
     echo "✅ 已创建 Pluginfile"
+    NEED_INSTALL_PLUGINS=true
 fi
 
 # 5. 从网络下载 Fastfile（使用 CDN 加速）
@@ -303,6 +313,23 @@ fi
 echo ""
 echo "✅ Fastlane 初始化完成！"
 echo ""
+
+# 如果需要安装插件，提示用户
+if [ "$NEED_INSTALL_PLUGINS" = true ]; then
+    echo "🔧 需要安装 Fastlane 插件..."
+    echo ""
+    read -p "是否现在安装插件？(y/n): " install_plugins
+    if [ "$install_plugins" = "y" ]; then
+        echo "📥 正在通过 bundle install 安装插件..."
+        bundle install
+        echo "✅ 插件安装完成"
+    else
+        echo "💡 稍后手动运行以下命令安装插件："
+        echo "   bundle install --verbose   "
+    fi
+    echo ""
+fi
+
 echo "📝 后续步骤："
 echo "1️⃣  编辑 .env 文件，填入你的实际配置信息"
 echo "2️⃣  将 Bugly 符号表上传工具放到 fastlane/Tools 目录"
