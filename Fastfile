@@ -227,6 +227,7 @@ module FastlaneUtils
   # 构建 gym 通用参数
   def self.build_gym_options(output_dir:, configuration:, export_method:, additional_options: {})
     {
+      destination: "generic/platform=iOS", 
       scheme: DEFAULT_CONFIG[:scheme_name],
       output_directory: output_dir,
       output_name: "#{DEFAULT_CONFIG[:scheme_name]}_#{Time.now.strftime('%Y%m%d%H%M%S')}.ipa",
@@ -253,14 +254,6 @@ module FastlaneUtils
       errors << "未配置 Bugly 工具路径 (GG_BUGLY_TOOL_PATH)"
     elsif !File.exist?(bugly_path)
       errors << "Bugly 工具不存在：#{bugly_path}"
-    end
-
-    # 检查输出目录权限
-    DEFAULT_CONFIG[:output_dirs].each do |name, path|
-      next unless path
-      unless File.writable?(File.dirname(path))
-        errors << "无法写入输出目录 (#{name}): #{path}"
-      end
     end
 
     if errors.any?
@@ -319,18 +312,31 @@ platform :ios do
   lane :dev_pgyer do |options|
     UI.header("📱 打包 Debug 版本并上传蒲公英")
 
-    update_desc = options[:update_description] || 
-                  ask("请输入更新说明：", default: "无更新说明")
-    update_desc = "无更新说明" if update_desc.to_s.strip.empty?
+    update_desc = if options[:update_description]
+                    options[:update_description].to_s
+                  else
+                    begin
+                      result = ask("请输入更新说明：")
+                      desc_str = result.to_s.strip
+                      desc_str.empty? ? "无更新说明" : desc_str
+                    rescue
+                      "无更新说明"
+                    end
+                  end
 
     output_dir = DEFAULT_CONFIG[:output_dirs][:debug]
     FastlaneUtils.cleanup_directory(output_dir)
+
 
     gym_options = FastlaneUtils.build_gym_options(
       output_dir: output_dir,
       configuration: 'Debug',
       export_method: 'development',
-      additional_options: { export_options: { signingStyle: 'automatic' } }
+      additional_options: { 
+        export_options: { 
+          signingStyle: 'automatic'
+        } 
+      }
     )
 
     gym(gym_options)
@@ -349,18 +355,25 @@ platform :ios do
   lane :public_pgyer do |options|
     UI.header("📦 打包 Release 版本并上传蒲公英")
 
-    update_desc = options[:update_description]
-    update_desc ||= ask("请输入本次更新说明（直接回车则不填）：", default: "无更新说明")
-    update_desc = "无更新说明" if update_desc.to_s.strip.empty?
-
-    output_dir = DEFAULT_CONFIG[:output_dirs][:release]
-    FastlaneUtils.cleanup_directory(output_dir)
+    update_desc = if options[:update_description]
+                    options[:update_description].to_s
+                  else
+                    begin
+                      result = ask("请输入本次更新说明（直接回车则不填）：")
+                      desc_str = result.to_s.strip
+                      desc_str.empty? ? "无更新说明" : desc_str
+                    rescue
+                      "无更新说明"
+                    end
+                  end
 
     gym_options = FastlaneUtils.build_gym_options(
       output_dir: output_dir,
       configuration: 'Release',
       export_method: 'ad-hoc',
-      additional_options: { export_options: { signingStyle: 'automatic' } }
+      additional_options: {
+        export_options: { signingStyle: 'automatic' } 
+      }
     )
 
     gym(gym_options)
@@ -379,9 +392,18 @@ platform :ios do
   lane :testflight_internal do |options|
     UI.header("🚀 TestFlight 内部测试上传")
 
-    update_desc = options[:update_description] || 
-                  ask("请输入更新说明：", default: "无更新说明")
-    update_desc = "无更新说明" if update_desc.to_s.strip.empty?
+    update_desc = if options[:update_description]
+                    options[:update_description].to_s
+                  else
+                    begin
+                      result = ask("请输入更新说明：")
+                      desc_str = result.to_s.strip
+                      desc_str.empty? ? "无更新说明" : desc_str
+                    rescue
+                      "无更新说明"
+                    end
+                  end
+
 
     output_dir = DEFAULT_CONFIG[:output_dirs][:testflight]
     FastlaneUtils.cleanup_directory(output_dir)
@@ -484,8 +506,20 @@ platform :ios do
   lane :upload_bugly_symbols do |options|
     UI.header("🐛 上传 dSYM 到 Bugly")
 
-    version = options[:version] || ask("请输入应用版本号（如 1.0.0）：")
+    version = if options[:version]
+                options[:version].to_s
+              else
+                begin
+                  result = ask("请输入应用版本号（如 1.0.0）：")
+                  ver_str = result.to_s.strip
+                  ver_str.empty? ? "1.0.0" : ver_str
+                rescue
+                  "1.0.0"
+                end
+              end
     UI.user_error!("❌ 版本号不能为空") if version.to_s.strip.empty?
+
+
 
     possible_dirs = options[:output_dirs] || DEFAULT_CONFIG[:output_dirs].values.compact
 
@@ -534,7 +568,14 @@ platform :ios do
     
     begin
       public_pgyer
-      upload_bugly_symbols(version: ask("请输入版本号用于上传 dSYM："))
+      version = begin
+                  result = ask("请输入版本号用于上传 dSYM：")
+                  ver_str = result.to_s.strip
+                  ver_str.empty? ? "1.0.0" : ver_str
+                rescue
+                  "1.0.0"
+                end
+      upload_bugly_symbols(version: version)
       
       UI.success("\n🎉 发布流程全部完成！")
     rescue StandardError => e

@@ -187,7 +187,6 @@ EOF
 
 # 在 fastlane 目录和项目根目录都创建 .env 文件
 cp "${FASTLANE_DIR}/.env.example" "${FASTLANE_DIR}/.env"
-cp "${FASTLANE_DIR}/.env.example" "${PROJECT_ROOT}/.env"
 echo "✅ 已创建 .env 文件（fastlane/.env 和 .env）"
 
 # 2. 配置 .gitignore（追加式更新）
@@ -213,7 +212,38 @@ echo "📁 创建目录结构..."
 mkdir -p "${FASTLANE_DIR}/auth"      # 存放 App Store Connect API 密钥 (.p8 文件)
 mkdir -p "${FASTLANE_DIR}/Tools"     # 存放 Bugly 符号表上传工具
 
-# 4. 从网络下载 Fastfile（使用 CDN 加速）
+# 4. 创建或更新 Pluginfile（蒲公英插件）
+echo "🔌 配置 Pluginfile..."
+
+PLUGINFILE_PATH="${FASTLANE_DIR}/Pluginfile"
+
+if [ -f "${PLUGINFILE_PATH}" ]; then
+    echo "⚠️  检测到 Pluginfile 已存在"
+    
+    # 检查是否已包含 pgyer 插件
+    if grep -q "fastlane-plugin-pgyer" "${PLUGINFILE_PATH}"; then
+        echo "✅ Pluginfile 已包含 pgyer 插件，跳过"
+    else
+        echo "📝 追加 pgyer 插件配置..."
+        cat >> "${PLUGINFILE_PATH}" << 'EOF'
+
+# 蒲公英分发平台插件
+gem 'fastlane-plugin-pgyer'
+EOF
+        echo "✅ 已追加 pgyer 插件到 Pluginfile"
+    fi
+else
+    echo "📄 创建 Pluginfile..."
+    cat > "${PLUGINFILE_PATH}" << 'EOF'
+# Fastlane 插件配置
+# 文档：https://docs.fastlane.tools/plugins/available-plugins/
+
+gem 'fastlane-plugin-pgyer'    # 蒲公英分发平台插件
+EOF
+    echo "✅ 已创建 Pluginfile"
+fi
+
+# 5. 从网络下载 Fastfile（使用 CDN 加速）
 echo "📋 下载 Fastfile..."
 
 # 多个下载源（优先 Gitee，国内更快）
