@@ -58,6 +58,7 @@ DEFAULT_CONFIG = {
   # 蒲公英
   pgyer: {
     api_key: FastlaneConfig.env('GG_PGYER_API_KEY'),
+    user_key: FastlaneConfig.env('GG_PGYER_USER_KEY'),
     password: FastlaneConfig.env('GG_PGYER_PASSWORD'),
     install_type: FastlaneConfig.env('GG_PGYER_INSTALL_TYPE', '2')
   },
