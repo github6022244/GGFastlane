@@ -316,7 +316,7 @@ platform :ios do
                     options[:update_description].to_s
                   else
                     begin
-                      result = ask("请输入更新说明：")
+                      result = ask("请输入更新说明:")
                       desc_str = result.to_s.strip
                       desc_str.empty? ? "无更新说明" : desc_str
                     rescue
@@ -359,13 +359,16 @@ platform :ios do
                     options[:update_description].to_s
                   else
                     begin
-                      result = ask("请输入本次更新说明（直接回车则不填）：")
+                      result = ask("请输入本次更新说明 (直接回车则不填):")
                       desc_str = result.to_s.strip
                       desc_str.empty? ? "无更新说明" : desc_str
                     rescue
                       "无更新说明"
                     end
                   end
+
+    output_dir = DEFAULT_CONFIG[:output_dirs][:release]
+    FastlaneUtils.cleanup_directory(output_dir)
 
     gym_options = FastlaneUtils.build_gym_options(
       output_dir: output_dir,
@@ -396,14 +399,13 @@ platform :ios do
                     options[:update_description].to_s
                   else
                     begin
-                      result = ask("请输入更新说明：")
+                      result = ask("请输入更新说明:")
                       desc_str = result.to_s.strip
                       desc_str.empty? ? "无更新说明" : desc_str
                     rescue
                       "无更新说明"
                     end
                   end
-
 
     output_dir = DEFAULT_CONFIG[:output_dirs][:testflight]
     FastlaneUtils.cleanup_directory(output_dir)
@@ -510,16 +512,14 @@ platform :ios do
                 options[:version].to_s
               else
                 begin
-                  result = ask("请输入应用版本号（如 1.0.0）：")
+                  result = ask("请输入应用版本号 (如 1.0.0):")
                   ver_str = result.to_s.strip
                   ver_str.empty? ? "1.0.0" : ver_str
                 rescue
                   "1.0.0"
                 end
               end
-    UI.user_error!("❌ 版本号不能为空") if version.to_s.strip.empty?
-
-
+    UI.user_error!("❌ 版本号不能为空") if version.strip.empty?
 
     possible_dirs = options[:output_dirs] || DEFAULT_CONFIG[:output_dirs].values.compact
 
@@ -569,7 +569,7 @@ platform :ios do
     begin
       public_pgyer
       version = begin
-                  result = ask("请输入版本号用于上传 dSYM：")
+                  result = ask("请输入版本号用于上传 dSYM:")
                   ver_str = result.to_s.strip
                   ver_str.empty? ? "1.0.0" : ver_str
                 rescue
