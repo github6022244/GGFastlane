@@ -182,9 +182,47 @@ module FastlaneUtils
     new_build = new_build[0, 18] if new_build.length > 18
 
     UI.success("✅ Build 号更新：#{current_build} → #{new_build}")
-    Actions.lane_context[SharedValues::BUILD_NUMBER] = new_build
     increment_build_number(build_number: new_build)
     new_build
+  end
+
+  # 增加 Build 号（模块内部方法）
+  def self.increment_build_number(options)
+    build_number = options[:build_number]
+    
+    # 更新 lane_context
+    Actions.lane_context[SharedValues::BUILD_NUMBER] = build_number
+    
+    # 尝试修改 Info.plist
+    require 'xcodeproj'
+    
+    # 查找项目文件
+    project_path = nil
+    if File.exist?('*.xcodeproj')
+      project_path = Dir.glob('*.xcodeproj').first
+    elsif File.exist?('*.xcworkspace')
+      workspace_path = Dir.glob('*.xcworkspace').first
+      project_path = workspace_path.gsub('.xcworkspace', '.xcodeproj')
+    end
+    
+    if project_path && File.directory?(project_path)
+      begin
+        project = Xcodeproj::Project.open(project_path)
+        project.targets.each do |target|
+          target.build_configurations.each do |config|
+            config.build_settings['CFBundleVersion'] = build_number
+          end
+        end
+        project.save
+        UI.success("✅ 已更新项目配置中的 CFBundleVersion: #{build_number}")
+      rescue => e
+        UI.important("⚠️  更新项目配置失败：#{e.message}，将继续执行")
+      end
+    else
+      UI.important("⚠️  未找到 Xcode 项目文件，跳过配置更新")
+    end
+    
+    build_number
   end
 
   # 临时解压 dSYM
