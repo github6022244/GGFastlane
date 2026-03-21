@@ -182,6 +182,7 @@ module FastlaneUtils
     new_build = new_build[0, 18] if new_build.length > 18
 
     UI.success("✅ Build 号更新：#{current_build} → #{new_build}")
+    Actions.lane_context[SharedValues::BUILD_NUMBER] = new_build
     increment_build_number(build_number: new_build)
     new_build
   end
