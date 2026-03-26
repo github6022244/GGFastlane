@@ -333,6 +333,23 @@ platform :ios do
       end
     end
 
+    # 检查 Java 环境（Bugly 符号表上传工具依赖）
+    UI.message("")
+    UI.message("☕ 检查 Java 环境...")
+    java_version_output = `java -version 2>&1`
+    if $?.success?
+      java_version = java_version_output.lines.first&.strip || "未知版本"
+      UI.success("✅ Java 已安装：#{java_version}")
+    else
+      UI.error("❌ Java 未安装或未配置到 PATH")
+      UI.message("💡 Bugly 符号表上传工具需要 Java 环境")
+      UI.message("📦 安装命令:")
+      UI.message("   brew install openjdk@17")
+      UI.message("   sudo ln -sfn /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk")
+      UI.message("   echo 'export PATH=\"/opt/homebrew/opt/openjdk@17/bin:$PATH\"' >> ~/.zshrc")
+      UI.message("   source ~/.zshrc")
+    end
+
     # 显示当前配置信息
     UI.header("📋 当前配置")
     UI.message("Scheme: #{DEFAULT_CONFIG[:scheme_name]}")
